@@ -1,0 +1,5 @@
+{
+    "version": "0.0.1",
+    "main_file": "contract_sign",
+    "main_score": "ContractSign"
+}
