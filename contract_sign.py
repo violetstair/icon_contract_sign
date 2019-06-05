@@ -1,3 +1,4 @@
+import ast
 from iconservice import *
 
 TAG = 'ContractSign'
@@ -99,10 +100,9 @@ class ContractSign(IconScoreBase, TokenStandard):
     @external
     def transfer(self, _to: Address, _value: int, _data: bytes = None):
         if _data is None:
-            self._transfer(self.msg.sender, _to, _value, b'None')
-        else:
-            # signing
-            pass
+            _data = b'None'
+
+        self._transfer(self.msg.sender, _to, _value, _data)
 
     def _transfer(self, _from: Address, _to: Address, _value: int, _data: bytes):
 
@@ -110,7 +110,7 @@ class ContractSign(IconScoreBase, TokenStandard):
         if _value < 0:
             revert("Transferring value cannot be less than zero")
         if self._balances[_from] < _value:
-            revert("Out of balance")
+            revert(f"Out of balance !!! from : {_from} to: {_to} balance : {_value}")
 
         self._balances[_from] = self._balances[_from] - _value
         self._balances[_to] = self._balances[_to] + _value
@@ -124,3 +124,13 @@ class ContractSign(IconScoreBase, TokenStandard):
         # Emits an event log `Transfer`
         self.Transfer(_from, _to, _value, _data)
         Logger.debug(f'Transfer({_from}, {_to}, {_value}, {_data})', TAG)
+
+    @external
+    def transaction(self, _data: bytes = None):
+        _conv_data = ast.literal_eval(_data.decode('utf-8'))
+
+        _is_from = Address.from_string(_conv_data['data']['params']['_from'])
+        _is_to = Address.from_string(_conv_data['data']['params']['_to'])
+        _is_value = int(_conv_data['data']['params']['_value'], 16)
+
+        self._transfer(_is_from, _is_to, _is_value, b'remote transaction')
